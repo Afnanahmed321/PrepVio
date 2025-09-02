@@ -15,7 +15,7 @@ function Channels() {
     window.scrollTo(0, 0);
     const fetchChannels = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/channels`);
+        const res = await axios.get(`http://localhost:5000/api/channels/course/${courseId}`);
         setChannels(res.data);
       } catch (err) {
         console.error("Failed to load channels:", err);
@@ -81,8 +81,7 @@ function Channels() {
                 {/* Buttons */}
                 <div className="flex items-center gap-6">
                   <Link
-                    // This is the updated path that includes the channel ID
-                    to={`/${channel._id}`}
+                    to={`/channels/${channel._id}`}
                     className="px-6 py-2 border border-black text-black rounded-lg hover:bg-gray-100 transition-colors inline-block"
                   >
                     Start Learning

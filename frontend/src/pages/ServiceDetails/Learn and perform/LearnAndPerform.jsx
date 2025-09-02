@@ -79,11 +79,7 @@ function LearnAndPerform() {
               <div className="flex gap-4">
                 <button
                   onClick={() => {
-                    // This is a scalable way to handle navigation.
-                    // The issue is that "service" is not being fetched and so is null.
-                    // Let's pass a placeholder slug for the service for now.
                     const serviceSlug = 'learn-and-perform'; 
-                    // Navigate using the course's unique ID from the backend.
                     navigate(`/services/${serviceSlug}/${course._id}`);
                   }}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"

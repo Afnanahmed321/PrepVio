@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { Schema } from 'mongoose';
 
 const courseSchema = new mongoose.Schema({
   name: {
@@ -19,19 +20,21 @@ const courseSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  channels: [{ // New field to store an array of channel ObjectIds
+    type: Schema.Types.ObjectId,
+    ref: 'Channel'
+  }]
 });
 
 courseSchema.pre('save', function (next) {
   if (!this.slug) {
-    // Generate slug from the 'name' field, replacing spaces with hyphens
     this.slug = this.name
       .toLowerCase()
       .trim()
-      .replace(/\s+/g, '-') // Replace spaces with hyphens
-      // The regex below now allows word characters, hyphens, and the plus sign.
-      .replace(/[^\w-+]/g, '') // Remove all other non-alphanumeric characters
-      .replace(/--+/g, '-') // Replace multiple hyphens with a single one
-      .replace(/^-+|-+$/g, ''); // Remove leading and trailing hyphens
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-+]/g, '')
+      .replace(/--+/g, '-')
+      .replace(/^-+|-+$/g, '');
   }
   next();
 });
