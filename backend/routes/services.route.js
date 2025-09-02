@@ -1,5 +1,5 @@
 import express from 'express';
-import Service from '../models/services.model.js'; // Ensure model path has .js extension
+import Service from '../models/services.model.js';
 
 const router = express.Router();
 
@@ -12,6 +12,27 @@ router.get('/', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
+// GET one service by slug
+router.get('/:slug', getService, (req, res) => {
+  res.json(res.service);
+});
+
+async function getService(req, res, next) {
+  let service;
+  try {
+    // Fetch by slug
+    service = await Service.findOne({ slug: req.params.slug });
+    if (!service) {
+      return res.status(404).json({ message: 'Cannot find service' });
+    }
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+
+  res.service = service;
+  next();
+}
 
 // POST a new service
 router.post('/', async (req, res) => {
@@ -26,25 +47,5 @@ router.post('/', async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 });
-
-// GET one service
-router.get('/:id', getService, (req, res) => {
-  res.json(res.service);
-});
-
-async function getService(req, res, next) {
-  let service;
-  try {
-    service = await Service.findById(req.params.id);
-    if (service == null) {
-      return res.status(404).json({ message: 'Cannot find service' });
-    }
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
-  }
-
-  res.service = service;
-  next();
-}
 
 export default router;

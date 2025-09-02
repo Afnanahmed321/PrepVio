@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const servicesSchema = new mongoose.Schema({
   title: {
@@ -9,9 +9,25 @@ const servicesSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  // You can add more fields here if needed
+  slug: {
+    type: String,
+    required: true,
+    unique: true,
+  },
 });
 
-const servicesModel = mongoose.model('Service', servicesSchema);
+// Pre-save hook to generate slug automatically
+servicesSchema.pre("validate", function (next) {
+  if (!this.slug && this.title) {
+    this.slug = this.title
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")       // replace spaces with hyphens
+      .replace(/[^\w-]+/g, "");   // remove invalid chars
+  }
+  next();
+});
 
-export default servicesModel
+const servicesModel = mongoose.model("Service", servicesSchema);
+
+export default servicesModel;
