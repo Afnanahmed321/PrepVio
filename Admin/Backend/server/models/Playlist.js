@@ -14,7 +14,12 @@ const playlistSchema = new Schema({
   },
   channelId: {
     type: Schema.Types.ObjectId,
-    ref: "Channel",   // ✅ references Channel model
+    ref: "Channel",
+    required: true,
+  },
+  courseId: {
+    type: Schema.Types.ObjectId,
+    ref: "Course",
     required: true,
   },
 });
@@ -22,3 +27,6 @@ const playlistSchema = new Schema({
 const Playlist = mongoose.model("Playlist", playlistSchema);
 
 export default Playlist;
+
+
+

@@ -2,24 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from "react-router-dom";
 
 // Reusable component for displaying channel information.
-const ChannelCard = ({ name, channel, image }) => {
-  return (
-    <div className="bg-indigo-400 rounded-xl text-white p-4 mb-4 flex items-center space-x-4">
-      <img
-        src={image}
-        alt="Instructor"
-        className="w-16 h-16 rounded-sm object-cover"
-      />
-      <div>
-        <div className="text-lg font-semibold">{name}</div>
-        <div className="text-sm">{channel}</div>
-        <div className="mt-2 underline cursor-pointer">My Notes</div>
-      </div>
+const ChannelCard = ({ name, channel, image }) => (
+  <div className="bg-indigo-400 rounded-xl text-white p-4 mb-4 flex items-center space-x-4">
+    <img src={image} alt="Instructor" className="w-16 h-16 rounded-sm object-cover" />
+    <div>
+      <div className="text-lg font-semibold">{name}</div>
+      <div className="text-sm">{channel}</div>
+      <div className="mt-2 underline cursor-pointer">My Notes</div>
     </div>
-  );
-};
+  </div>
+);
 
-// Reusable component for a single playlist item.
+// Single playlist item
 const PlayListItem = ({ video, index, duration, onVideoSelect, isPlaying }) => {
   const title = video?.snippet?.title || "No Title";
   const thumbnail = video?.snippet?.thumbnails?.medium?.url;
@@ -31,9 +25,7 @@ const PlayListItem = ({ video, index, duration, onVideoSelect, isPlaying }) => {
       ${isPlaying ? 'bg-gray-300 text-black' : 'bg-gray-100 hover:bg-gray-200'}`}
     >
       <div className="w-[100px] h-[70px] flex-shrink-0 overflow-hidden rounded bg-black">
-        {thumbnail && (
-          <img src={thumbnail} alt={title} className="w-full h-full object-contain" />
-        )}
+        {thumbnail && <img src={thumbnail} alt={title} className="w-full h-full object-contain" />}
       </div>
       <div className="flex flex-col justify-between h-[70px] w-full">
         <div className="text-sm font-semibold leading-tight line-clamp-2">
@@ -50,7 +42,7 @@ const PlayListItem = ({ video, index, duration, onVideoSelect, isPlaying }) => {
   );
 };
 
-// Reusable component for the video player itself.
+// Video player
 const PlayListPlayer = ({ video, loading }) => {
   const videoId = video?.snippet?.resourceId?.videoId;
   const title = video?.snippet?.title;
@@ -77,9 +69,7 @@ const PlayListPlayer = ({ video, loading }) => {
         />
       </div>
       <div className="flex items-start justify-between gap-2 mb-2">
-        <h2 className="text-lg font-semibold line-clamp-2 w-full pr-2">
-          {title}
-        </h2>
+        <h2 className="text-lg font-semibold line-clamp-2 w-full pr-2">{title}</h2>
         <button className="border border-black bg-white hover:bg-gray-300 text-black text-md px-3 py-1 rounded-md whitespace-nowrap">
           Watch Later
         </button>
@@ -88,7 +78,7 @@ const PlayListPlayer = ({ video, loading }) => {
   );
 };
 
-// Reusable component for the playlist sidebar.
+// Sidebar with playlist
 const PlayListSidebar = ({ videos, durations, totalDuration, onVideoSelect, selectedVideoId, channelData }) => {
   const isDurationLoading = !totalDuration;
 
@@ -119,7 +109,7 @@ const PlayListSidebar = ({ videos, durations, totalDuration, onVideoSelect, sele
   );
 };
 
-// Main component (renamed from JennyCHome ➝ VideoPlayerHome)
+// VideoPlayer for a single playlist
 const VideoPlayerHome = ({ playlistData }) => {
   const apiKey = "AIzaSyBs569PnYQUNFUXon5AMersGFuKS8aS1QQ";
   const contentLink = playlistData.link;
@@ -132,7 +122,6 @@ const VideoPlayerHome = ({ playlistData }) => {
   const [selectedVideoId, setSelectedVideoId] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Helper functions
   const formatDuration = (iso) => {
     const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
     const h = parseInt(match?.[1] || 0);
@@ -173,7 +162,7 @@ const VideoPlayerHome = ({ playlistData }) => {
           setLoading(false);
           return;
         }
-        
+
         setVideos(playlistVideos);
 
         const videoIds = playlistVideos.map(video => video.snippet.resourceId.videoId).join(',');
@@ -205,13 +194,10 @@ const VideoPlayerHome = ({ playlistData }) => {
           setLoading(false);
           return;
         }
-        
+
         const singleVideo = [{
           id: videoItem.id,
-          snippet: {
-            ...videoItem.snippet,
-            resourceId: { videoId: videoItem.id }
-          },
+          snippet: { ...videoItem.snippet, resourceId: { videoId: videoItem.id } },
           contentDetails: videoItem.contentDetails
         }];
 
@@ -259,11 +245,9 @@ const VideoPlayerHome = ({ playlistData }) => {
   );
 };
 
-// Main component
+// Main VideoPlayer Component
 const VideoPlayer = () => {
-  // Use useParams to get the channelId from the URL
-  const { channelId } = useParams();
-
+  const { channelId, courseId } = useParams(); // fetch both channelId & courseId
   const [allPlaylists, setAllPlaylists] = useState([]);
   const [selectedPlaylist, setSelectedPlaylist] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -273,13 +257,11 @@ const VideoPlayer = () => {
     const fetchPlaylists = async () => {
       try {
         setLoading(true);
-        // Fetch playlists for the specific channel
-        const response = await fetch(`${BASE_URL}/playlists/channel/${channelId}`);
+        // fetch playlists by both channelId and courseId
+        const response = await fetch(`${BASE_URL}/playlists/${channelId}/${courseId}`);
         const data = await response.json();
         setAllPlaylists(data);
-        if (data.length > 0) {
-          setSelectedPlaylist(data[0]);
-        }
+        setSelectedPlaylist(data.length > 0 ? data[0] : null);
       } catch (error) {
         console.error("Failed to fetch playlists from backend:", error);
       } finally {
@@ -287,34 +269,28 @@ const VideoPlayer = () => {
       }
     };
 
-    if (channelId) {
+    if (channelId && courseId) {
       fetchPlaylists();
     }
-    
-  }, [channelId]); // Re-run effect when channelId changes
+  }, [channelId, courseId]);
 
-  if (loading) {
-    return (
-      <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
-        <p className="text-xl font-semibold text-gray-700">Loading playlists...</p>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
+      <p className="text-xl font-semibold text-gray-700">Loading playlists...</p>
+    </div>
+  );
 
-  // Handle the case where no playlists are found for the channel
-  if (!selectedPlaylist) {
-    return (
-      <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
-        <p className="text-xl font-semibold text-gray-700">No playlists found for this channel.</p>
-      </div>
-    );
-  }
+  if (!selectedPlaylist) return (
+    <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
+      <p className="text-xl font-semibold text-gray-700">No playlists found for this course.</p>
+    </div>
+  );
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {selectedPlaylist && <VideoPlayerHome playlistData={selectedPlaylist} />}
     </div>
   );
-}
+};
 
 export default VideoPlayer;

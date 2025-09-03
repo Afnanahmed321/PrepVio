@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
-import { Schema } from 'mongoose';
+import slugify from "slugify"; // npm install slugify
+const { Schema } = mongoose;
 
-const courseSchema = new mongoose.Schema({
+const courseSchema = new Schema({
   name: {
     type: String,
     required: true,
@@ -17,28 +18,26 @@ const courseSchema = new mongoose.Schema({
   },
   slug: {
     type: String,
-    required: true,
-    unique: true,
+    unique: true
   },
-  channels: [{ // New field to store an array of channel ObjectIds
-    type: Schema.Types.ObjectId,
-    ref: 'Channel'
-  }]
-});
+  channels: [{ type: Schema.Types.ObjectId, ref: "Channel" }] // Many-to-many relation
+}, { timestamps: true });
 
-courseSchema.pre('save', function (next) {
-  if (!this.slug) {
-    this.slug = this.name
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, '-')
-      .replace(/[^a-z0-9-+]/g, '')
-      .replace(/--+/g, '-')
-      .replace(/^-+|-+$/g, '');
+// Generate unique slug from name
+courseSchema.pre("save", async function(next) {
+  if (this.name) {
+    let baseSlug = slugify(this.name, { lower: true, strict: true });
+    let slug = baseSlug;
+    let count = 1;
+
+    while (await mongoose.models.Course.exists({ slug })) {
+      slug = `${baseSlug}-${count++}`;
+    }
+
+    this.slug = slug;
   }
   next();
 });
 
 const Course = mongoose.model("Course", courseSchema);
-
 export default Course;

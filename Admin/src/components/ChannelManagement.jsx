@@ -5,7 +5,6 @@ import Modal from './Modal';
 
 const ChannelManagement = () => {
   const [channels, setChannels] = useState([]);
-  const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -13,27 +12,22 @@ const ChannelManagement = () => {
   const [currentEditItem, setCurrentEditItem] = useState(null);
 
   const API_URL = 'http://localhost:5000/api/channels';
-  const COURSE_API_URL = 'http://localhost:5000/api/courses';
 
-  const fetchChannelsAndCourses = async () => {
+  const fetchChannels = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [channelsRes, coursesRes] = await Promise.all([
-        axios.get(API_URL),
-        axios.get(COURSE_API_URL)
-      ]);
-      setChannels(channelsRes.data);
-      setCourses(coursesRes.data);
+      const res = await axios.get(API_URL);
+      setChannels(res.data);
     } catch (err) {
-      setError('Failed to fetch channels or courses');
+      setError('Failed to fetch channels');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchChannelsAndCourses();
+    fetchChannels();
   }, []);
 
   const handleOpenModal = (type, item = null) => {
@@ -54,11 +48,10 @@ const ChannelManagement = () => {
 
     const form = e.target;
     const itemData = {
-      name: form.name.value,
-      description: form.description.value,
-      imageUrl: form.imageUrl.value,
-      link: form.link.value,
-      courseId: form.courseId.value,
+      name: form.name.value.trim(),
+      description: form.description.value.trim(),
+      imageUrl: form.imageUrl.value.trim(),
+      link: form.link.value.trim(),
     };
 
     try {
@@ -67,10 +60,12 @@ const ChannelManagement = () => {
       } else {
         await axios.put(`${API_URL}/${currentEditItem._id}`, itemData);
       }
+      form.reset();
       handleCloseModal();
-      fetchChannelsAndCourses();
+      fetchChannels();
     } catch (err) {
-      setError(`Failed to ${modalType} channel`);
+      console.error(err.response?.data || err.message);
+      setError(err.response?.data?.message || `Failed to ${modalType} channel`);
     } finally {
       setLoading(false);
     }
@@ -82,7 +77,7 @@ const ChannelManagement = () => {
     setError(null);
     try {
       await axios.delete(`${API_URL}/${id}`);
-      fetchChannelsAndCourses();
+      fetchChannels();
     } catch (err) {
       setError('Failed to delete channel');
     } finally {
@@ -111,7 +106,6 @@ const ChannelManagement = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-              {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th> */}
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
@@ -146,7 +140,7 @@ const ChannelManagement = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="text-center py-4 text-gray-500">No channels found.</td>
+                <td colSpan="4" className="text-center py-4 text-gray-500">No channels found.</td>
               </tr>
             )}
           </tbody>
@@ -156,22 +150,6 @@ const ChannelManagement = () => {
       {modalOpen && (
         <Modal title={`${modalType === 'add' ? 'Add' : 'Edit'} Channel`} onClose={handleCloseModal}>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Select Course</label>
-              <select
-                name="courseId"
-                defaultValue={currentEditItem?.courseId || ''}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                required
-              >
-                <option value="">Select a course...</option>
-                {courses.map(course => (
-                  <option key={course._id} value={course._id}>
-                    {course.name}
-                  </option>
-                ))}
-              </select>
-            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Channel Name</label>
               <input

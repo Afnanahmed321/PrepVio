@@ -1,49 +1,30 @@
-// server/models/Channel.js
-
-import mongoose from 'mongoose';
-import { Schema } from 'mongoose';
+import mongoose from "mongoose";
+import slugify from "slugify";
+const { Schema } = mongoose;
 
 const channelSchema = new Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  description: {
-    type: String,
-    required: true
-  },
-  imageUrl: {
-    type: String,
-    required: true
-  },
-  link: {
-    type: String,
-    required: true
-  },
-  courseId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Course',
-    required: true
-  },
-  slug: {
-    type: String,
-    unique: true
-  }
-});
+  name: { type: String, required: true, trim: true },
+  description: { type: String, required: true },
+  imageUrl: { type: String, required: true },
+  link: { type: String, required: true }, // allow duplicates
+  slug: { type: String, unique: true },
+  courses: [{ type: Schema.Types.ObjectId, ref: "Course" }]
+}, { timestamps: true });
 
-// Pre-save hook to generate slug automatically
-channelSchema.pre("validate", function (next) {
-  if (this.name) {
-    this.slug = this.name
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, "-")
-      .replace(/[^\w-]+/g, "");
+// Generate unique slug
+channelSchema.pre("save", async function(next) {
+  if (this.isModified("name")) {
+    let baseSlug = slugify(this.name, { lower: true, strict: true });
+    let slug = baseSlug;
+    let count = 1;
+
+    while (await mongoose.models.Channel.exists({ slug })) {
+      slug = `${baseSlug}-${count++}`;
+    }
+    this.slug = slug;
   }
   next();
 });
 
-const Channel = mongoose.model('Channel', channelSchema);
-
+const Channel = mongoose.model("Channel", channelSchema);
 export default Channel;
