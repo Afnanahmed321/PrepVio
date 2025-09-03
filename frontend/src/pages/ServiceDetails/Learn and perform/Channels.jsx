@@ -11,6 +11,13 @@ function Channels() {
   const { courseId } = useParams();
   const navigate = useNavigate();
 
+  // ✅ Slugify function for clean URLs
+  const slugify = (text) =>
+    text
+      .toLowerCase()
+      .replace(/\s+/g, "-") // Replace spaces with -
+      .replace(/[^\w-]+/g, ""); // Remove special chars
+
   useEffect(() => {
     window.scrollTo(0, 0);
 
@@ -21,7 +28,6 @@ function Channels() {
           `http://localhost:5000/api/channels/course/${courseId}`
         );
 
-        // Check if response is an array
         if (Array.isArray(res.data)) {
           setChannels(res.data);
         } else {
@@ -45,7 +51,9 @@ function Channels() {
       <Header />
       <main className="container mx-auto px-6 py-12 text-center mt-8">
         <h1 className="text-5xl lg:text-6xl font-bold mb-6">Course Channels</h1>
-        <p className="text-lg text-gray-800">Explore channels assigned to this course.</p>
+        <p className="text-lg text-gray-800">
+          Explore channels assigned to this course.
+        </p>
         <button
           onClick={handleBack}
           className="mt-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
@@ -58,7 +66,9 @@ function Channels() {
         {loading && <div className="text-center text-xl">Loading...</div>}
         {error && <div className="text-center text-red-600">{error}</div>}
         {!loading && !error && channels.length === 0 && (
-          <div className="text-center text-xl">No channels assigned to this course.</div>
+          <div className="text-center text-xl">
+            No channels assigned to this course.
+          </div>
         )}
 
         <div className="flex flex-col gap-8">
@@ -77,11 +87,16 @@ function Channels() {
 
               <div className="flex-1 text-left">
                 <h2 className="text-2xl font-bold mb-2">{channel.name}</h2>
-                <p className="text-gray-700 mb-4 line-clamp-3">{channel.description}</p>
+                <p className="text-gray-700 mb-4">{channel.description}</p>
 
                 <div className="flex items-center gap-6">
                   <button
-                    onClick={() => navigate(`/channels/${channel._id}/${courseId}`)}
+                    onClick={() =>
+                      window.open(
+                        `/${slugify(channel.name)}/${channel._id}/${courseId}`,
+                        "_blank"
+                      )
+                    }
                     className="px-6 py-2 border border-black text-black rounded-lg hover:bg-gray-100 transition-colors"
                   >
                     Start Learning

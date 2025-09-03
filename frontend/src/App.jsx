@@ -18,7 +18,7 @@ function App() {
         <Route path="/services/:serviceSlug/:courseId" element={<Channels />} />
 
         {/* VideoPlayer route */}
-        <Route path="/channels/:channelId/:courseId" element={<VideoPlayer />} />
+        <Route path="/:channelName/:channelId/:courseId" element={<VideoPlayer />} />
 
         <Route path="/services/check-your-ability" element={<CheckYourAbility />} />
       </Routes>
