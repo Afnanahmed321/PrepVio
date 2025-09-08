@@ -1,5 +1,3 @@
-
-
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home/Home.jsx";
 import LearnAndPerform from "./pages/ServiceDetails/Learn and perform/LearnAndPerform.jsx";

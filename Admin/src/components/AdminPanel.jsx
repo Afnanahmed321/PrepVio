@@ -4,6 +4,7 @@ import ServiceManagement from './ServiceManagement'; // New import
 import CourseManagement from './CourseManagement';
 import ChannelManagement from './ChannelManagement'
 import PlaylistManagement from './PlaylistManagement'
+import QuizManagement from './QuizManagement'
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState('services');
@@ -18,6 +19,8 @@ const AdminPanel = () => {
         return <ChannelManagement />;
       case 'playlists':
         return <PlaylistManagement />;
+      case 'quizzes':
+        return <QuizManagement/>
       default:
         return <ServiceManagement />;
     }

@@ -6,6 +6,7 @@ import servicesRouter from './server/routes/services.js';
 import coursesRouter from './server/routes/courses.js';
 import channelsRouter from './server/routes/channels.js'
 import playlistsRouter from './server/routes/playlists.js';
+import quizzesRouter from './server/routes/quizzes.js';
 
 dotenv.config();
 
@@ -29,6 +30,7 @@ app.use('/api/services', servicesRouter);
 app.use('/api/courses', coursesRouter)
 app.use('/api/channels', channelsRouter)
 app.use('/api/playlists',playlistsRouter)
+app.use('/api/quizzes', quizzesRouter);
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
