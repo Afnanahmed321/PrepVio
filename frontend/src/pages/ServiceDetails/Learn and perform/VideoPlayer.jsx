@@ -436,6 +436,41 @@ const PlayListPlayer = ({ video, onPlayerReady, onTimeUpdate }) => {
     }
   };
 
+  useEffect(() => {
+  // Disable right click
+  const disableContextMenu = (e) => e.preventDefault();
+
+  // Disable Print Screen key
+  const disablePrintScreen = (e) => {
+    if (e.key === "PrintScreen") {
+      navigator.clipboard.writeText(""); // clear clipboard
+      alert("⚠️ Screenshots are disabled on this page!");
+    }
+  };
+
+  // Disable text copy
+  const disableCopy = (e) => {
+    e.preventDefault();
+    alert("⚠️ Copying text is disabled on this page!");
+  };
+
+  // Disable text selection
+  const disableSelect = (e) => e.preventDefault();
+
+  document.addEventListener("contextmenu", disableContextMenu);
+  document.addEventListener("keyup", disablePrintScreen);
+  document.addEventListener("copy", disableCopy);
+  document.addEventListener("selectstart", disableSelect);
+
+  return () => {
+    document.removeEventListener("contextmenu", disableContextMenu);
+    document.removeEventListener("keyup", disablePrintScreen);
+    document.removeEventListener("copy", disableCopy);
+    document.removeEventListener("selectstart", disableSelect);
+  };
+}, []);
+
+
   return (
     <div className="w-full lg:w-2/3 bg-white p-4 rounded-xl shadow-md">
       <div className="aspect-video mb-4 overflow-hidden rounded-lg">
@@ -483,48 +518,93 @@ const PlayListSidebar = ({ videos, durations, onVideoSelect, selectedVideoId, ch
 };
 
 // ✅ Quiz Modal
-const QuizModal = ({ quiz, onAnswer }) => {
+const QuizModal = ({ quiz, onAnswer, onClose }) => {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
 
   const handleButtonClick = (option) => {
     setSelectedAnswer(option);
-    onAnswer(option);
+    onAnswer(option); // resume video but don’t auto-close
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[100]">
-      <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md mx-4">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">Quick Quiz!</h2>
-        <p className="mb-4 text-lg">{quiz.question}</p>
-        <div className="flex flex-col space-y-2">
-          {quiz.options.map((option, i) => (
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-gray-900 bg-opacity-80 backdrop-blur-sm z-[100] animate-fadeIn">
+      <div className="relative bg-gray-800 rounded-3xl p-8 w-full max-w-lg mx-4 shadow-2xl transform transition-transform duration-300 scale-100">
+        
+        {/* ✅ Header - no close button initially */}
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl font-extrabold text-white">Quiz Question</h2>
+          {selectedAnswer && (
             <button
-              key={i}
-              className={`w-full p-3 rounded-md text-white font-medium transition-colors
-                ${
-                  selectedAnswer === option
-                    ? option === quiz.correctAnswer
-                      ? "bg-green-500"
-                      : "bg-red-500"
-                    : "bg-blue-600 hover:bg-blue-700"
-                }`}
-              onClick={() => handleButtonClick(option)}
-              disabled={selectedAnswer !== null}
+              onClick={onClose}
+              className="text-gray-400 hover:text-white text-xl font-bold"
             >
-              {option}
+              ✖
             </button>
-          ))}
+          )}
         </div>
-        <p className="mt-4 text-center text-sm text-gray-500">
-          {selectedAnswer &&
-            (selectedAnswer === quiz.correctAnswer
-              ? "Correct!"
-              : `Incorrect. The answer is "${quiz.correctAnswer}".`)}
+
+        <span className="text-gray-500 text-sm font-semibold block mb-4">
+          {quiz.questionNumber || ""}
+        </span>
+
+        <p className="mb-8 text-gray-300 text-xl font-medium leading-relaxed">
+          {quiz.question}
         </p>
+
+        <div className="flex flex-col gap-4">
+          {quiz.options.map((option, i) => {
+            let buttonClasses =
+              "w-full py-4 rounded-xl font-bold transition-all duration-200 ease-in-out transform";
+            let hoverClasses = "hover:-translate-y-1 hover:shadow-lg";
+
+            if (selectedAnswer) {
+              if (option === quiz.correctAnswer) {
+                buttonClasses += " bg-green-600 text-white shadow-green-500/30";
+                hoverClasses = "";
+              } else if (option === selectedAnswer && option !== quiz.correctAnswer) {
+                buttonClasses += " bg-red-600 text-white shadow-red-500/30";
+                hoverClasses = "";
+              } else {
+                buttonClasses += " bg-gray-700 text-gray-400 cursor-not-allowed";
+                hoverClasses = "";
+              }
+            } else {
+              buttonClasses += " bg-gray-700 text-gray-200 " + hoverClasses;
+            }
+
+            return (
+              <button
+                key={i}
+                className={buttonClasses}
+                onClick={() => handleButtonClick(option)}
+                disabled={!!selectedAnswer}
+              >
+                {option}
+              </button>
+            );
+          })}
+        </div>
+
+        {selectedAnswer && (
+          <div className="mt-6 text-center text-lg font-bold">
+            {selectedAnswer === quiz.correctAnswer ? (
+              <span className="text-green-400">Correct! You've got it.</span>
+            ) : (
+              <span className="text-red-400">
+                Incorrect! The correct answer was:
+                <span className="block mt-1 font-extrabold text-white">
+                  "{quiz.correctAnswer}"
+                </span>
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
+
 
 // ✅ Main VideoPlayer Component
 export default function VideoPlayer() {

@@ -2,35 +2,46 @@
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
-const quizSchema = new Schema({
-  // Reference to the Playlist (or video) this quiz belongs to
-  playlistId: {
-    type: Schema.Types.ObjectId,
-    ref: "Playlist",
-    required: true,
-  },
-  // The timestamp in seconds when the quiz should appear
+// Schema for a single question
+const questionSchema = new Schema({
   timestamp: {
     type: Number,
     required: true,
     min: 0,
   },
-  // The question text
   question: {
     type: String,
     required: true,
   },
-  // An array of possible answers
   options: {
     type: [String],
     required: true,
+    validate: {
+      validator: (v) => v.length >= 2,
+      message: "At least 2 options are required",
+    },
   },
-  // The correct answer from the options array
   correctAnswer: {
     type: String,
     required: true,
   },
-}, { timestamps: true });
+});
+
+// Schema for the quiz (all questions belong to one channel + course)
+const quizSchema = new Schema(
+  {
+    channelName: {
+      type: String,
+      required: true,
+    },
+    courseName: {
+      type: String,
+      required: true,
+    },
+    questions: [questionSchema], // array of questions
+  },
+  { timestamps: true }
+);
 
 const Quiz = mongoose.model("Quiz", quizSchema);
 export default Quiz;
