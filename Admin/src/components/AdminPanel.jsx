@@ -5,6 +5,7 @@ import ChannelManagement from './ChannelManagement';
 import PlaylistManagement from './PlaylistManagement';
 import QuizManagement from './QuizManagement';
 import VideoList from './VideoList';
+import CategoryManagement from './CategoryManagement'
 
 const AdminPanel = () => {
   return (
@@ -18,6 +19,7 @@ const AdminPanel = () => {
         <Link to="/channels" className="py-3 px-6 text-lg font-medium border-b-4 border-transparent hover:text-gray-800 hover:border-gray-300">Channels</Link>
         <Link to="/playlists" className="py-3 px-6 text-lg font-medium border-b-4 border-transparent hover:text-gray-800 hover:border-gray-300">Playlists</Link>
         <Link to="/videos" className="py-3 px-6 text-lg font-medium border-b-4 border-transparent hover:text-gray-800 hover:border-gray-300">Videos</Link>
+        <Link to="/category" className="py-3 px-6 text-lg font-medium border-b-4 border-transparent hover:text-gray-800 hover:border-gray-300">Add Category</Link>
       </div>
 
       {/* Content */}
@@ -29,6 +31,7 @@ const AdminPanel = () => {
           <Route path="playlists" element={<PlaylistManagement />} />
           <Route path="quizzes" element={<QuizManagement />} />
           <Route path="videos" element={<VideoList />} />
+          <Route path="category" element={<CategoryManagement />} />
         </Routes>
       </div>
     </div>
