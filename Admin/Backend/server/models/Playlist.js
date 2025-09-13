@@ -5,12 +5,13 @@ const { Schema } = mongoose;
 const playlistSchema = new Schema({
   type: {
     type: String,
-    enum: ["playlist", "video"],
-    required: true,
+    enum: ["playlist","video"],
+    default: "playlist",
   },
   link: {
     type: String,
-    required: true,
+    required: true, // Make sure the link is required
+    unique: true, // Consider making the link unique to prevent duplicates
   },
   channelId: {
     type: Schema.Types.ObjectId,
@@ -27,6 +28,3 @@ const playlistSchema = new Schema({
 const Playlist = mongoose.model("Playlist", playlistSchema);
 
 export default Playlist;
-
-
-

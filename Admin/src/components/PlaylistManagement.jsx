@@ -1,8 +1,8 @@
-// client/src/components/PlaylistManagement.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FaPlus, FaTrash, FaEdit } from "react-icons/fa";
 import Modal from "./Modal";
+import VideoList from "./VideoList"; // Import VideoList
 import QuizManagement from "./QuizManagement"; // Import QuizManagement
 
 const PlaylistManagement = () => {
@@ -19,14 +19,42 @@ const PlaylistManagement = () => {
   const [selectedCourseId, setSelectedCourseId] = useState("");
   const [selectedChannelId, setSelectedChannelId] = useState("");
 
-  // State for managing quizzes
+  // For managing videos & quizzes
   const [managingQuizzes, setManagingQuizzes] = useState(false);
+  const [viewingVideos, setViewingVideos] = useState(false);
+  const [selectedPlaylist, setSelectedPlaylist] = useState(null);
   const [selectedChannelName, setSelectedChannelName] = useState("");
   const [selectedCourseName, setSelectedCourseName] = useState("");
 
   const API_URL = "http://localhost:5000/api/playlists";
   const CHANNEL_API_URL = "http://localhost:5000/api/channels";
   const COURSE_API_URL = "http://localhost:5000/api/courses";
+
+  // Helper function to extract YouTube video ID from URL
+  const extractVideoId = (url) => {
+    if (!url) return null;
+    
+    // Handle various YouTube URL formats
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+      /^([a-zA-Z0-9_-]{11})$/ // Direct video ID
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) return match[1];
+    }
+    
+    return url; // Return as-is if no pattern matches
+  };
+
+  // Helper function to extract playlist ID from URL
+  const extractPlaylistId = (url) => {
+    if (!url) return null;
+    
+    const match = url.match(/[?&]list=([^&]+)/);
+    return match ? match[1] : url;
+  };
 
   const fetchPlaylistsAndCourses = async () => {
     setLoading(true);
@@ -40,7 +68,7 @@ const PlaylistManagement = () => {
 
       setPlaylists(playlistsRes.data.data || []);
       setChannels(channelsRes.data.data || []);
-      setCourses(coursesRes.data.data || []);
+      setCourses(coursesRes.data || []);
     } catch (err) {
       setError(err.message || "Failed to fetch data");
     } finally {
@@ -91,6 +119,7 @@ const PlaylistManagement = () => {
       link: form.link.value,
       channelId: selectedChannelId,
       courseId: selectedCourseId,
+      questions: currentEditItem?.questions || [], // Keep existing questions
     };
 
     try {
@@ -128,13 +157,42 @@ const PlaylistManagement = () => {
     ? courses.find((c) => c._id === selectedCourseId)?.channels || []
     : channels;
 
-  // Conditionally render the QuizManagement component
-  if (managingQuizzes) {
+  // Render VideoList if a playlist is selected
+  if (viewingVideos && selectedPlaylist) {
+    return (
+      <VideoList
+        playlist={selectedPlaylist}
+        channelName={selectedPlaylist.channelId?.name || ""}
+        courseName={selectedPlaylist.courseId?.name || ""}
+        onBack={() => {
+          setViewingVideos(false);
+          setSelectedPlaylist(null);
+        }}
+      />
+    );
+  }
+
+  // Render QuizManagement if managing quizzes
+  if (managingQuizzes && selectedPlaylist) {
+    console.log("Rendering QuizManagement with:", {
+      playlistId: selectedPlaylist._id,
+      videoId: selectedPlaylist.videoId,
+      channelName: selectedChannelName,
+      courseName: selectedCourseName
+    });
+
     return (
       <QuizManagement
+        playlistId={selectedPlaylist._id}
+        videoId={selectedPlaylist.videoId}
         channelName={selectedChannelName}
         courseName={selectedCourseName}
-        onBack={() => setManagingQuizzes(false)}
+        onBack={() => {
+          setManagingQuizzes(false);
+          setSelectedPlaylist(null);
+          setSelectedChannelName("");
+          setSelectedCourseName("");
+        }}
       />
     );
   }
@@ -158,21 +216,11 @@ const PlaylistManagement = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Type
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Link
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Channel
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Course
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Link</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Channel</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -185,38 +233,69 @@ const PlaylistManagement = () => {
                       href={playlist.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
+                      className="text-blue-500 hover:underline truncate max-w-xs block"
                     >
                       {playlist.link}
                     </a>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {playlist.channelId?.name || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {playlist.courseId?.name || "N/A"}
-                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{playlist.channelId?.name || "N/A"}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{playlist.courseId?.name || "N/A"}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                    {/* Manage Quizzes button */}
                     <button
                       onClick={() => {
-                        setManagingQuizzes(true);
-                        setSelectedChannelName(playlist.channelId?.name || "");
-                        setSelectedCourseName(playlist.courseId?.name || "");
+                        const channelName = playlist.channelId?.name || "";
+                        const courseName = playlist.courseId?.name || "";
+                        
+                        console.log("Button clicked for:", {
+                          type: playlist.type,
+                          link: playlist.link,
+                          channelName,
+                          courseName
+                        });
+
+                        if (playlist.type === "video") {
+                          // For single video - extract video ID from the link
+                          const videoId = extractVideoId(playlist.link);
+                          
+                          console.log("Extracted videoId:", videoId);
+                          
+                          if (!videoId) {
+                            alert("Could not extract video ID from the link");
+                            return;
+                          }
+
+                          setManagingQuizzes(true);
+                          setSelectedChannelName(channelName);
+                          setSelectedCourseName(courseName);
+
+                          // Set selected playlist with proper video ID
+                          setSelectedPlaylist({
+                            _id: playlist._id, // This is the MongoDB playlist/content ID
+                            videoId: videoId, // This is the YouTube video ID
+                            type: playlist.type
+                          });
+                        } else if (playlist.type === "playlist") {
+                          // For playlist - show videos first
+                          setSelectedPlaylist(playlist);
+                          setViewingVideos(true);
+                        }
                       }}
-                      className="text-gray-600 hover:text-gray-900 mr-2"
+                      className="text-gray-600 hover:text-gray-900 mr-2 px-2 py-1 bg-gray-100 rounded"
                     >
-                      Manage Quizzes
+                      {playlist.type === "video" ? "Manage Quizzes" : "View Videos"}
                     </button>
-                    <button
-                      onClick={() => handleOpenModal("edit", playlist)}
-                      className="text-blue-600 hover:text-blue-900"
+
+                    <button 
+                      onClick={() => handleOpenModal("edit", playlist)} 
+                      className="text-blue-600 hover:text-blue-900 p-1"
+                      title="Edit"
                     >
                       <FaEdit />
                     </button>
-                    <button
-                      onClick={() => handleDelete(playlist._id)}
-                      className="text-red-600 hover:text-red-900"
+                    <button 
+                      onClick={() => handleDelete(playlist._id)} 
+                      className="text-red-600 hover:text-red-900 p-1"
+                      title="Delete"
                     >
                       <FaTrash />
                     </button>
@@ -225,9 +304,7 @@ const PlaylistManagement = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="text-center py-4 text-gray-500">
-                  No content found.
-                </td>
+                <td colSpan="5" className="text-center py-4 text-gray-500">No content found.</td>
               </tr>
             )}
           </tbody>
@@ -237,17 +314,6 @@ const PlaylistManagement = () => {
       {modalOpen && (
         <Modal title={`${modalType === "add" ? "Add" : "Edit"} Content`} onClose={handleCloseModal}>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Title</label>
-              <input
-                type="text"
-                name="title"
-                defaultValue={currentEditItem?.title || ""}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                required
-              />
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700">Select Course</label>
               <select
@@ -302,12 +368,22 @@ const PlaylistManagement = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">YouTube Link / ID</label>
+              <label className="block text-sm font-medium text-gray-700">
+                YouTube Link / ID
+                <span className="text-xs text-gray-500 block">
+                  {contentType === "video" 
+                    ? "Enter full YouTube URL or just the video ID" 
+                    : "Enter full YouTube playlist URL or playlist ID"}
+                </span>
+              </label>
               <input
                 type="text"
                 name="link"
                 defaultValue={currentEditItem?.link || ""}
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                placeholder={contentType === "video" 
+                  ? "https://www.youtube.com/watch?v=VIDEO_ID or just VIDEO_ID" 
+                  : "https://www.youtube.com/playlist?list=PLAYLIST_ID"}
                 required
               />
             </div>
@@ -317,14 +393,16 @@ const PlaylistManagement = () => {
                 type="button"
                 onClick={handleCloseModal}
                 className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+                disabled={loading}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                disabled={loading}
               >
-                {modalType === "add" ? "Add" : "Update"}
+                {loading ? "Saving..." : (modalType === "add" ? "Add" : "Update")}
               </button>
             </div>
           </form>

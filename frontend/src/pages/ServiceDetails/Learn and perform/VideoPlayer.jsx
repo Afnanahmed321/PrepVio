@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import YouTube from "react-youtube";
 
-// ✅ Reusable component for displaying channel information
+// Reusable component for displaying channel information
 const ChannelCard = ({ name, imageUrl }) => (
   <div className="bg-indigo-400 rounded-xl text-white p-4 mb-4 flex items-center space-x-4">
     <img
@@ -18,7 +18,7 @@ const ChannelCard = ({ name, imageUrl }) => (
   </div>
 );
 
-// ✅ Single playlist item
+// Single playlist item
 const PlayListItem = ({ video, index, duration, onVideoSelect, isPlaying }) => {
   const title = video?.snippet?.title || "No Title";
   const thumbnail = video?.snippet?.thumbnails?.medium?.url;
@@ -51,7 +51,7 @@ const PlayListItem = ({ video, index, duration, onVideoSelect, isPlaying }) => {
   );
 };
 
-// ✅ Video player (using react-youtube)
+// Video player (using react-youtube)
 const PlayListPlayer = ({ video, onPlayerReady, onTimeUpdate }) => {
   const videoId = video?.snippet?.resourceId?.videoId;
   const title = video?.snippet?.title;
@@ -103,24 +103,17 @@ const PlayListPlayer = ({ video, onPlayerReady, onTimeUpdate }) => {
   };
 
   useEffect(() => {
-    // Disable right click
     const disableContextMenu = (e) => e.preventDefault();
-
-    // Disable Print Screen key
     const disablePrintScreen = (e) => {
       if (e.key === "PrintScreen") {
-        navigator.clipboard.writeText(""); // clear clipboard
+        navigator.clipboard.writeText("");
         alert("⚠️ Screenshots are disabled on this page!");
       }
     };
-
-    // Disable text copy
     const disableCopy = (e) => {
       e.preventDefault();
       alert("⚠️ Copying text is disabled on this page!");
     };
-
-    // Disable text selection
     const disableSelect = (e) => e.preventDefault();
 
     document.addEventListener("contextmenu", disableContextMenu);
@@ -157,7 +150,7 @@ const PlayListPlayer = ({ video, onPlayerReady, onTimeUpdate }) => {
   );
 };
 
-// ✅ Sidebar with playlist
+// Sidebar with playlist
 const PlayListSidebar = ({ videos, durations, onVideoSelect, selectedVideoId, channelData }) => {
   return (
     <div className="w-full lg:w-1/3 bg-white p-2 rounded-xl shadow-md">
@@ -182,20 +175,19 @@ const PlayListSidebar = ({ videos, durations, onVideoSelect, selectedVideoId, ch
   );
 };
 
-// ✅ Quiz Modal
+// Quiz Modal
 const QuizModal = ({ quiz, onAnswer, onClose }) => {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
 
   const handleButtonClick = (option) => {
     setSelectedAnswer(option);
-    onAnswer(option); // resume video but don't auto-close
+    onAnswer(option);
   };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center p-4 bg-gray-900 bg-opacity-80 backdrop-blur-sm z-[100] animate-fadeIn">
       <div className="relative bg-gray-800 rounded-3xl p-8 w-full max-w-lg mx-4 shadow-2xl transform transition-transform duration-300 scale-100">
         
-        {/* ✅ Header - no close button initially */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-extrabold text-white">Quiz Question</h2>
           {selectedAnswer && (
@@ -269,7 +261,7 @@ const QuizModal = ({ quiz, onAnswer, onClose }) => {
   );
 };
 
-// ✅ Main VideoPlayer Component
+// Main VideoPlayer Component
 export default function VideoPlayer() {
   const { channelId, courseId } = useParams();
   const [selectedPlaylist, setSelectedPlaylist] = useState(null);
@@ -280,12 +272,12 @@ export default function VideoPlayer() {
   const [selectedVideoId, setSelectedVideoId] = useState(null);
 
   // Quiz state
-  const [quizQuestions, setQuizQuestions] = useState([]); // ✅ Store questions array directly
+  const [quizQuestions, setQuizQuestions] = useState([]);
   const [isQuizActive, setIsQuizActive] = useState(false);
   const [currentQuiz, setCurrentQuiz] = useState(null);
-  const [quizQueue, setQuizQueue] = useState([]); // ✅ queue for multiple quizzes
+  const [quizQueue, setQuizQueue] = useState([]);
   const [player, setPlayer] = useState(null);
-  const [shownQuizzes, setShownQuizzes] = useState(new Set()); // ✅ prevent repeats
+  const [shownQuizzes, setShownQuizzes] = useState(new Set());
 
   const BASE_URL = "http://localhost:5000/api";
   const YOUTUBE_API_KEY = "AIzaSyBs569PnYQUNFUXon5AMersGFuKS8aS1QQ";
@@ -307,7 +299,7 @@ export default function VideoPlayer() {
       try {
         setLoading(true);
         const response = await axios.get(`${BASE_URL}/playlists/${channelId}/${courseId}`);
-        const data = response.data;
+        const data = response.data.data;
         if (data.length > 0) {
           setSelectedPlaylist(data[0]);
         }
@@ -368,18 +360,27 @@ export default function VideoPlayer() {
           setDurations(newDurations);
         }
 
-        // ✅ Fix: Properly handle quiz data structure
         try {
-          const quizResponse = await axios.get(`${BASE_URL}/quizzes/by-playlist/${selectedPlaylist._id}`);
-          console.log("Quiz response:", quizResponse.data);
+          const quizResponse = await axios.get(`${BASE_URL}/quizzes/by-playlist-document/${selectedPlaylist._id}`);
           
-          // ✅ Extract questions array from quiz object
-          if (quizResponse.data && quizResponse.data.questions && Array.isArray(quizResponse.data.questions)) {
-            setQuizQuestions(quizResponse.data.questions);
-            console.log("Set quiz questions:", quizResponse.data.questions);
+          if (quizResponse.data.success) {
+            const quizData = quizResponse.data.data;
+            const videoQuizzes = quizData?.videos || [];
+            
+            const allQuestions = videoQuizzes.reduce((acc, videoQuiz) => {
+              if (videoQuiz.questions) {
+                return acc.concat(videoQuiz.questions.map(q => ({
+                  ...q,
+                  videoId: videoQuiz.videoId
+                })));
+              }
+              return acc;
+            }, []);
+
+            setQuizQuestions(allQuestions);
+
           } else {
             setQuizQuestions([]);
-            console.log("No quiz questions found or invalid format");
           }
         } catch (quizError) {
           console.error("Error fetching quizzes (might be normal if no quizzes exist):", quizError);
@@ -391,44 +392,33 @@ export default function VideoPlayer() {
       }
     };
     fetchContent();
-  }, [selectedPlaylist]);
+  }, [selectedPlaylist, YOUTUBE_API_KEY, BASE_URL]);
 
   const handleVideoSelect = (video) => {
     setSelectedVideo(video);
     setSelectedVideoId(video.snippet.resourceId.videoId);
-    setShownQuizzes(new Set()); // reset shown quizzes when switching video
-    setQuizQueue([]); // reset queue
-    setIsQuizActive(false); // reset quiz state
+    setShownQuizzes(new Set());
+    setQuizQueue([]);
+    setIsQuizActive(false);
     setCurrentQuiz(null);
-    console.log("Video selected:", video.snippet.title);
   };
 
-  // ✅ Fix: Improved time checking with range tolerance
   const handleTimeUpdate = (currentTime) => {
-    if (!quizQuestions || quizQuestions.length === 0) return;
-    
-    console.log("Current time:", currentTime, "Available quizzes:", quizQuestions.length);
-    
-    // ✅ Use a range check instead of exact match (±1 second tolerance)
+    if (!quizQuestions || quizQuestions.length === 0 || !selectedVideoId) return;
+
     const dueQuizzes = quizQuestions.filter((q) => {
+      if (q.videoId !== selectedVideoId) {
+        return false;
+      }
+
       const quizTime = Math.floor(q.timestamp);
       const timeDiff = Math.abs(quizTime - currentTime);
       const isDue = timeDiff <= 1 && !shownQuizzes.has(q._id);
-      
-      if (isDue) {
-        console.log("Quiz is due:", {
-          quizId: q._id,
-          quizTime,
-          currentTime,
-          question: q.question?.substring(0, 50) + "..."
-        });
-      }
       
       return isDue;
     });
 
     if (dueQuizzes.length > 0) {
-      console.log("Adding due quizzes to queue:", dueQuizzes.length);
       setQuizQueue((prev) => [...prev, ...dueQuizzes]);
       setShownQuizzes((prev) => {
         const newSet = new Set(prev);
@@ -438,41 +428,29 @@ export default function VideoPlayer() {
     }
   };
 
-  // ✅ Process quiz queue
   useEffect(() => {
     if (!isQuizActive && quizQueue.length > 0) {
       const nextQuiz = quizQueue[0];
-      console.log("Processing next quiz:", nextQuiz.question?.substring(0, 50) + "...");
       setCurrentQuiz(nextQuiz);
       setIsQuizActive(true);
       if (player) {
         player.pauseVideo();
-        console.log("Video paused for quiz");
       }
     }
   }, [quizQueue, isQuizActive, player]);
 
-  // ✅ Handle quiz answer submission
   const handleQuizSubmit = (selectedAnswer) => {
-    console.log("Quiz answered:", selectedAnswer);
-    
-    // Resume video after a short delay to show the result
     setTimeout(() => {
       if (player) {
         player.playVideo();
-        console.log("Video resumed after quiz");
       }
-      
-      // Remove current quiz from queue and reset state
       setQuizQueue((prev) => prev.slice(1));
       setIsQuizActive(false);
       setCurrentQuiz(null);
-    }, 2000); // Show result for 2 seconds
+    }, 2000);
   };
 
-  // ✅ Handle quiz modal close
   const handleQuizClose = () => {
-    console.log("Quiz modal closed");
     if (player) {
       player.playVideo();
     }
@@ -499,7 +477,6 @@ export default function VideoPlayer() {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen font-sans relative">
-      {/* ✅ Debug info */}
       {process.env.NODE_ENV === 'development' && (
         <div className="fixed top-4 right-4 bg-black text-white p-2 rounded text-xs z-50">
           <div>Quizzes loaded: {quizQuestions.length}</div>

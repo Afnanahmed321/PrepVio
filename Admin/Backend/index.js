@@ -4,9 +4,10 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import servicesRouter from './server/routes/services.js';
 import coursesRouter from './server/routes/courses.js';
-import channelsRouter from './server/routes/channels.js'
+import channelsRouter from './server/routes/channels.js';
 import playlistsRouter from './server/routes/playlists.js';
 import quizzesRouter from './server/routes/quizzes.js';
+import videosRouter from './server/routes/videos.js'; // ✅ Import videos route
 
 dotenv.config();
 
@@ -27,10 +28,11 @@ mongoose.connect(process.env.MONGO_URI, {
 
 // Routes
 app.use('/api/services', servicesRouter);
-app.use('/api/courses', coursesRouter)
-app.use('/api/channels', channelsRouter)
-app.use('/api/playlists',playlistsRouter)
+app.use('/api/courses', coursesRouter);
+app.use('/api/channels', channelsRouter);
+app.use('/api/playlists', playlistsRouter);
 app.use('/api/quizzes', quizzesRouter);
+app.use('/api/videos', videosRouter); // ✅ Mount video routes
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
