@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../../components/Header/Header.jsx';
 import Footer from '../../../components/Footer/Footer.jsx';
+import Silk from '../../../blocks/Silk.jsx'
 
 function LearnAndPerform() {
   const [service, setService] = useState(null);
@@ -38,6 +39,9 @@ function LearnAndPerform() {
 
   return (
     <div className="bg-white text-black min-h-screen">
+    <div className="fixed inset-0 -z-10">
+        <Silk />
+      </div>
       <Header />
 
       <main className="container mx-auto px-6 py-12 text-center mt-8">
@@ -60,7 +64,6 @@ function LearnAndPerform() {
               key={course._id}
               className="bg-white border rounded-xl shadow-md p-6 flex flex-col justify-between hover:shadow-lg transition-shadow"
             >
-              
               {course.imageUrl && (
                 <img
                   src={course.imageUrl}
@@ -70,12 +73,11 @@ function LearnAndPerform() {
               )}
               <h2 className="text-2xl font-bold mb-2">{course.name}</h2>
               <p className="text-gray-600 text-md mb-6">
-                {course.description && course.description.length > 100
+                  {course.description && course.description.length > 100
                   ? course.description.substring(0, 100) + "..."
                   : course.description}
               </p>
               
-
               <div className="flex gap-4">
                 <button
                   onClick={() => {
@@ -91,7 +93,6 @@ function LearnAndPerform() {
           ))}
         </div>
       </section>
-
       <Footer />
     </div>
   );

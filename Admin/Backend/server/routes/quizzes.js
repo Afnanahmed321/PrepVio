@@ -331,4 +331,16 @@ router.delete("/:playlistId/:videoId/questions/:questionId", async (req, res) =>
   }
 });
 
+// GET a service by slug
+router.get('/slug/:slug', async (req, res) => {
+  try {
+    const service = await Service.findOne({ slug: req.params.slug });
+    if (!service) return res.status(404).json({ message: 'Service not found' });
+    res.json(service);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
 export default router;

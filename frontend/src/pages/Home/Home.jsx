@@ -4,13 +4,16 @@ import About from "../../components/About/About.jsx";
 import Footer from "../../components/Footer/Footer.jsx";
 import { ZigZagServices } from "../../components/Services/ZigZagServices.jsx";
 
+
 const Home = () => {
   return (
-    <div className="border-b xl:border-none bg-gradient-to-r from-blue-50 to-yellow-50">
+    <div>
+    
       <Header />
 
       {/* Hero Section */}
       <main className="container mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+      
         <div className="flex flex-col space-y-4">
           <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold leading-tight">
             Learn and <br /> Practice Without Limit
