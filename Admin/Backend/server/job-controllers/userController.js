@@ -2,28 +2,90 @@ import Job from "../job-models/Job.js"
 import JobApplication from "../job-models/JobApplication.js"
 import User from "../job-models/User.js"
 import { v2 as cloudinary } from "cloudinary"
+import { clerkClient } from "@clerk/clerk-sdk-node";
 
 
 // Get User Data
+// export const getUserData = async (req, res) => {
+//     const { userId } = req.auth(); // ✅ updated
+
+//     try {
+//         const user = await User.findById(userId);
+
+//         if (!user) {
+//             return res.json({ success: false, message: 'User Not Found' });
+//         }
+
+//         res.json({ success: true, user });
+//     } catch (error) {
+//         res.json({ success: false, message: error.message });
+//     }
+// }
+
 export const getUserData = async (req, res) => {
-    const { userId } = req.auth(); // ✅ updated
+  const userId = req.auth?.userId; // safe check
 
-    try {
-        const user = await User.findById(userId);
+  if (!userId) {
+    return res.json({ success: false, message: "User not authenticated" });
+  }
 
-        if (!user) {
-            return res.json({ success: false, message: 'User Not Found' });
-        }
+  try {
+    // Check if user exists in MongoDB
+    let user = await User.findById(userId);
 
-        res.json({ success: true, user });
-    } catch (error) {
-        res.json({ success: false, message: error.message });
+    if (!user) {
+      // Fetch user from Clerk
+      const clerkUser = await clerkClient.users.getUser(userId);
+
+      user = new User({
+        _id: clerkUser.id,
+        name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim(),
+        email: clerkUser.emailAddresses[0].emailAddress,
+        image: clerkUser.imageUrl,
+        resume: "",
+      });
+
+      await user.save();
     }
-}
+
+    res.json({ success: true, user });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+};
+
+//   const { userId } = req.auth; // Clerk attaches this automatically
+
+//   try {
+//     // Check if user already exists in DB
+//     let user = await User.findById(userId);
+
+//     if (!user) {
+//       // Fetch user data from Clerk
+//       const clerkUser = await clerkClient.users.getUser(userId);
+
+//       // Create a new user in MongoDB
+//       user = new User({
+//         _id: clerkUser.id,
+//         name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim(),
+//         email: clerkUser.emailAddresses[0].emailAddress,
+//         image: clerkUser.imageUrl,
+//         resume: ""
+//       });
+
+//       await user.save();
+//     }
+
+//     res.json({ success: true, user });
+//   } catch (error) {
+//     res.json({ success: false, message: error.message });
+//   }
+// };
 
 
 
 // Apply For Job
+
 export const applyForJob = async (req, res) => {
 
     const { jobId } = req.body
