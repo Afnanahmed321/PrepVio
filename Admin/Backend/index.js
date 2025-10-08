@@ -62,8 +62,8 @@ import categoryRoutes from './server/routes/categories.js';
 
 // New backend routes
 import companyRoutes from '../Backend/server/job-routes/companyRoutes.js';
-import jobRoutes from '../Backend/server/job-routes/jobRoutes.js';
-import userRoutes from '../Backend/server/job-routes/userRoutes.js';
+import jobRoutes from './server/job-routes/jobRoutes.js';
+import userRoutes from './server/job-routes/userRoutes.js';
 import { clerkWebhooks } from './server/job-controllers/webhooks.js';
 
 dotenv.config();

@@ -4,22 +4,25 @@ import User from "../job-models/User.js"
 import { v2 as cloudinary } from "cloudinary"
 import { clerkClient } from "@clerk/clerk-sdk-node";
 
-
 // Get User Data
 // export const getUserData = async (req, res) => {
-//     const { userId } = req.auth(); // ✅ updated
+
+//     const userId = req.auth.userId
 
 //     try {
-//         const user = await User.findById(userId);
+
+//         const user = await User.findById(userId)
 
 //         if (!user) {
-//             return res.json({ success: false, message: 'User Not Found' });
+//             return res.json({ success: false, message: 'User Not Found' })
 //         }
 
-//         res.json({ success: true, user });
+//         res.json({ success: true, user })
+
 //     } catch (error) {
-//         res.json({ success: false, message: error.message });
+//         res.json({ success: false, message: error.message })
 //     }
+
 // }
 
 export const getUserData = async (req, res) => {
@@ -33,19 +36,29 @@ export const getUserData = async (req, res) => {
     // Check if user exists in MongoDB
     let user = await User.findById(userId);
 
-    if (!user) {
-      // Fetch user from Clerk
+    try {
+      // Try fetching user from Clerk
       const clerkUser = await clerkClient.users.getUser(userId);
 
-      user = new User({
-        _id: clerkUser.id,
-        name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim(),
-        email: clerkUser.emailAddresses[0].emailAddress,
-        image: clerkUser.imageUrl,
-        resume: "",
-      });
-
-      await user.save();
+      if (!user) {
+        // If user not in DB but exists in Clerk, save to DB
+        user = new User({
+          _id: clerkUser.id,
+          name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim(),
+          email: clerkUser.emailAddresses[0].emailAddress,
+          image: clerkUser.imageUrl,
+          resume: "",
+        });
+        await user.save();
+      }
+    } catch (clerkError) {
+      // User not found in Clerk → delete from MongoDB if exists
+      if (user) {
+        await User.findByIdAndDelete(userId);
+        return res.json({ success: false, message: "User account deleted" });
+      } else {
+        return res.json({ success: false, message: "User not found" });
+      }
     }
 
     res.json({ success: true, user });
@@ -54,38 +67,9 @@ export const getUserData = async (req, res) => {
   }
 };
 
-//   const { userId } = req.auth; // Clerk attaches this automatically
-
-//   try {
-//     // Check if user already exists in DB
-//     let user = await User.findById(userId);
-
-//     if (!user) {
-//       // Fetch user data from Clerk
-//       const clerkUser = await clerkClient.users.getUser(userId);
-
-//       // Create a new user in MongoDB
-//       user = new User({
-//         _id: clerkUser.id,
-//         name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim(),
-//         email: clerkUser.emailAddresses[0].emailAddress,
-//         image: clerkUser.imageUrl,
-//         resume: ""
-//       });
-
-//       await user.save();
-//     }
-
-//     res.json({ success: true, user });
-//   } catch (error) {
-//     res.json({ success: false, message: error.message });
-//   }
-// };
-
 
 
 // Apply For Job
-
 export const applyForJob = async (req, res) => {
 
     const { jobId } = req.body
@@ -170,4 +154,3 @@ export const updateUserResume = async (req, res) => {
 
     }
 }
-

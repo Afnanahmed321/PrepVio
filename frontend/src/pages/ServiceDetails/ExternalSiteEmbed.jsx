@@ -1,24 +1,49 @@
 // ExternalSiteEmbed.jsx
-import React from 'react'
+import React, { useEffect, useState } from "react";
 
 const ExternalSiteEmbed = () => {
-  // IMPORTANT: Replace this with the actual deployed URL of your JobPortal project
-  const deployedUrl = "http://localhost:5173"; 
+  // Replace with your Job Portal URL (dev or prod)
+  const deployedUrl =
+    import.meta.env.VITE_JOB_PORTAL_URL || "http://localhost:5173";
+
+  const [redirecting, setRedirecting] = useState(true);
+
+  useEffect(() => {
+    // Small delay for UX
+    const timer = setTimeout(() => {
+      window.location.href = deployedUrl;
+    }, 1000); // 1 second delay
+
+    return () => clearTimeout(timer);
+  }, [deployedUrl]);
 
   return (
-    <div style={{ height: '100vh', width: '100%' }}>
-      {/* The iframe allows you to embed another webpage.
-        You must ensure the external site allows embedding (via CORS/CSP headers).
-      */}
-      <iframe
-        src={deployedUrl}
-        title="Job Portal External Site"
-        style={{ 
-          border: 'none', 
-          width: '100%', 
-          height: '100%' 
+    <div
+      style={{
+        height: "100vh",
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "1rem",
+        fontFamily: "sans-serif",
+      }}
+    >
+      <h2>Redirecting to Job Portal...</h2>
+      <p>Please wait a moment. If you are not redirected automatically,</p>
+      <a
+        href={deployedUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          color: "#007bff",
+          textDecoration: "underline",
+          cursor: "pointer",
         }}
-      />
+      >
+        click here to open the Job Portal
+      </a>
     </div>
   );
 };

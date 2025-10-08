@@ -342,5 +342,41 @@ router.get('/slug/:slug', async (req, res) => {
   }
 });
 
+// PUT: Update a question
+router.put("/:playlistId/videos/:videoId/questions/:questionId", async (req, res) => {
+  try {
+    const { playlistId, videoId, questionId } = req.params;
+    const { timestamp, question, options, correctAnswer } = req.body;
+
+    const quiz = await Quiz.findOne({ playlistId });
+
+    if (!quiz) {
+      return res.status(404).json({ success: false, message: "Quiz not found" });
+    }
+
+    const videoQuiz = quiz.videos.find(v => v.videoId === videoId);
+    if (!videoQuiz) {
+      return res.status(404).json({ success: false, message: "Video quiz not found" });
+    }
+
+    const questionToEdit = videoQuiz.questions.id(questionId);
+    if (!questionToEdit) {
+      return res.status(404).json({ success: false, message: "Question not found" });
+    }
+
+    // Update fields
+    questionToEdit.timestamp = timestamp;
+    questionToEdit.question = question;
+    questionToEdit.options = options;
+    questionToEdit.correctAnswer = correctAnswer;
+
+    await quiz.save();
+    res.status(200).json({ success: true, message: "Question updated", quiz });
+  } catch (err) {
+    console.error("Error updating question:", err);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
 
 export default router;
