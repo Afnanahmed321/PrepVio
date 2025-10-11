@@ -40,16 +40,19 @@
 // app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 import express from 'express';
-import mongoose from 'mongoose';
+// import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import * as Sentry from '@sentry/node';
-import { clerkMiddleware } from '@clerk/express';
+// import * as Sentry from '@sentry/node';
+// import { clerkMiddleware } from '@clerk/express';
+import session from "express-session";
+
+import authRoutes from './server/auth-routes/auth.routes.js'
 
 // Config imports
 import './server/config/instrument.js';
 import connectDB from './server/config/db.js';
-import connectCloudinary from './server/config/cloudinary.js';
+// import connectCloudinary from './server/config/cloudinary.js';
 
 // Old backend routes
 import servicesRouter from './server/routes/services.js';
@@ -61,10 +64,10 @@ import videosRouter from './server/routes/videos.js';
 import categoryRoutes from './server/routes/categories.js';
 
 // New backend routes
-import companyRoutes from '../Backend/server/job-routes/companyRoutes.js';
-import jobRoutes from './server/job-routes/jobRoutes.js';
-import userRoutes from './server/job-routes/userRoutes.js';
-import { clerkWebhooks } from './server/job-controllers/webhooks.js';
+// import companyRoutes from '../Backend/server/job-routes/companyRoutes.js';
+// import jobRoutes from './server/job-routes/jobRoutes.js';
+// import userRoutes from './server/job-routes/userRoutes.js';
+// import { clerkWebhooks } from './server/job-controllers/webhooks.js';
 
 dotenv.config();
 
@@ -74,20 +77,37 @@ const PORT = process.env.PORT || 5000;
 // ------------------------------
 // Middleware
 // ------------------------------
-app.use(cors());
+
+app.use(
+  session({
+    secret: "12345",
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }, // only true on HTTPS
+  })
+);
+
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 app.use(express.json());
-app.use(clerkMiddleware());
+// app.use(clerkMiddleware());
 
 // ------------------------------
 // Database Connections
 // ------------------------------
 await connectDB();          // Your MongoDB connection
-await connectCloudinary();  // Cloudinary connection
+// await connectCloudinary();  // Cloudinary connection
 
 // ------------------------------
 // Routes
 // ------------------------------
 app.get('/', (req, res) => res.send('✅ API is running successfully'));
+
+app.use(authRoutes)
 
 // Old backend routes
 app.use('/api/services', servicesRouter);
@@ -99,20 +119,20 @@ app.use('/api/videos', videosRouter);
 app.use('/api/categories', categoryRoutes);
 
 // New backend routes
-app.post('/webhooks', clerkWebhooks);
-app.use('/api/company', companyRoutes);
-app.use('/api/jobs', jobRoutes);
-app.use('/api/users', userRoutes);
+// app.post('/webhooks', clerkWebhooks);
+// app.use('/api/company', companyRoutes);
+// app.use('/api/jobs', jobRoutes);
+// app.use('/api/users', userRoutes);
 
 // Debug route for Sentry
-app.get('/debug-sentry', (req, res) => {
-  throw new Error('My first Sentry error!');
-});
+// app.get('/debug-sentry', (req, res) => {
+//   throw new Error('My first Sentry error!');
+// });
 
 // ------------------------------
 // Sentry Setup
 // ------------------------------
-Sentry.setupExpressErrorHandler(app);
+// Sentry.setupExpressErrorHandler(app);
 
 // ------------------------------
 // Start Server

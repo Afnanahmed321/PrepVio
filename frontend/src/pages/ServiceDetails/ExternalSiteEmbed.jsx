@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 const ExternalSiteEmbed = () => {
   // Replace with your Job Portal URL (dev or prod)
   const deployedUrl =
-    import.meta.env.VITE_JOB_PORTAL_URL || "http://localhost:5173";
+    import.meta.env.VITE_JOB_PORTAL_URL || "http://localhost:5174";
 
   const [redirecting, setRedirecting] = useState(true);
 

@@ -1,27 +1,27 @@
-import jwt from 'jsonwebtoken'
-import Company from '../job-models/Company.js'
+// import jwt from 'jsonwebtoken'
+// import Company from '../job-models/Company.js'
 
-// Middleware ( Protect Company Routes )
-export const protectCompany = async (req,res,next) => {
+// // Middleware ( Protect Company Routes )
+// export const protectCompany = async (req,res,next) => {
 
-    // Getting Token Froms Headers
-    const token = req.headers.token
+//     // Getting Token Froms Headers
+//     const token = req.headers.token
 
     
-    if (!token) {
-        return res.json({ success:false, message:'Not authorized, Login Again'})
-    }
+//     if (!token) {
+//         return res.json({ success:false, message:'Not authorized, Login Again'})
+//     }
 
-    try {
+//     try {
         
-        const decoded = jwt.verify(token, process.env.JWT_SECRET)
+//         const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
-        req.company = await Company.findById(decoded.id).select('-password')
+//         req.company = await Company.findById(decoded.id).select('-password')
 
-        next()
+//         next()
 
-    } catch (error) {
-        res.json({success:false, message: error.message})
-    }
+//     } catch (error) {
+//         res.json({success:false, message: error.message})
+//     }
 
-}
+// }
